@@ -55,8 +55,8 @@ class NewRecord(FileSystemEventHandler):
             return False
         if self.data is None:
             return False
-        # Ensure its not a set seed
-        if "RandomSpeedrun #" not in self.data['world_name']:
+        # Ensure its not a random seed
+        if "SetSpeedrun #" not in self.data['world_name']:
             return False
         return True
 
