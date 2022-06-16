@@ -33,6 +33,16 @@ def ms_to_string(ms, returnTime=False):
         return t
     return t.strftime("%H:%M:%S")
 
+def ms_to_sec(ms, returnTime=False):
+    if ms is None:
+        return None
+    secs = ms / 1000
+    ms = int(ms)
+    t = datetime(1970, 1, 1) + timedelta(milliseconds=ms)
+    if returnTime:
+        return t
+    return f'{secs:.3f}'
+
 
 class NewRecord(FileSystemEventHandler):
     buffer = None
@@ -103,20 +113,20 @@ class NewRecord(FileSystemEventHandler):
 
         # Advancements
         has_done_something = False
-        self.this_run[0] = ms_to_string(self.data["final_rta"])
+        self.this_run[0] = ms_to_sec(self.data["final_rta"])
         for idx in range(len(advChecks)):
             # Prefer to read from timelines
             if advChecks[idx][0] == "timelines" and self.this_run[idx + 1] is None:
                 for tl in self.data["timelines"]:
                     if tl["name"] == advChecks[idx][1]:
                         if lan > int(tl["rta"]):
-                            self.this_run[idx + 1] = ms_to_string(tl["igt"])
+                            self.this_run[idx + 1] = ms_to_sec(tl["igt"])
                             has_done_something = True
             # Read other stuff from advancements
             elif (advChecks[idx][0] in adv and adv[advChecks[idx][0]]["complete"] and self.this_run[idx + 1] is None):
                 if lan > int(adv[advChecks[idx][0]]["criteria"][advChecks[idx][1]]["rta"]):
                     self.this_run[idx +
-                                  1] = ms_to_string(adv[advChecks[idx][0]]["criteria"][advChecks[idx][1]]["igt"])
+                                  1] = ms_to_sec(adv[advChecks[idx][0]]["criteria"][advChecks[idx][1]]["igt"])
                     has_done_something = True
 
         # If nothing was done, just count as reset
@@ -128,24 +138,22 @@ class NewRecord(FileSystemEventHandler):
             return
 
         # Stats
-        self.this_run[len(advChecks) + 1] = ms_to_string(
+        self.this_run[len(advChecks) + 1] = ms_to_sec(
             self.data["final_igt"])
-        self.this_run[len(advChecks) + 2] = ms_to_string(
-            self.data["retimed_igt"])
         for idx in range(1, len(statsChecks)):
             if (
                 statsChecks[idx][0] in stats
                 and statsChecks[idx][1] in stats[statsChecks[idx][0]]
             ):
-                self.this_run[len(advChecks) + 2 + idx] = str(
+                self.this_run[len(advChecks) + 1 + idx] = str(
                     stats[statsChecks[idx][0]][statsChecks[idx][1]]
                 )
 
         # Push to csv
-        d = ms_to_string(int(self.data["date"]), returnTime=True)
+        d = ms_to_sec(int(self.data["date"]), returnTime=True)
         data = ([str(d)] + self.this_run +
                 [str(self.wall_resets), str(self.splitless_count),
-                 ms_to_string(self.rta_spent), ms_to_string(self.break_rta)])
+                 ms_to_sec(self.rta_spent), ms_to_sec(self.break_rta)])
 
         with open(statsCsv, "r") as infile:
             reader = list(csv.reader(infile))

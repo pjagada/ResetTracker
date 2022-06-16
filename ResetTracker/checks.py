@@ -8,5 +8,4 @@ advChecks = [
 ]
 
 statsChecks = [
-    "nothing lol",
 ]
